@@ -1,0 +1,65 @@
+{
+  "name": "zhd-ai-onboarding-system",
+  "version": "1.0.0",
+  "description": "AI-Based Training and Onboarding System for ZHD Consulting - Full Stack Application",
+  "keywords": [
+    "ai",
+    "onboarding",
+    "hr",
+    "mysql",
+    "nodejs",
+    "react",
+    "tensorflow",
+    "nlp",
+    "recommendation-engine"
+  ],
+  "homepage": "https://github.com/piquii365/project_power#readme",
+  "bugs": {
+    "url": "https://github.com/piquii365/project_power/issues"
+  },
+  "license": "ISC",
+  "author": "Blessing E Nyakabau",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npm run dev",
+    "build": "npm run client:build && npm run server:build",
+    "client:build": "cd client && npm run build",
+    "server:build": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm run test",
+    "test:server": "cd server && npm run test",
+    "migrate": "cd server && npm run migrate",
+    "seed": "cd server && npm run seed",
+    "train": "node scripts/train-models.js",
+    "validate": "node scripts/validate-models.js",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write .",
+    "docker:build": "docker build -t zhd-onboarding .",
+    "docker:run": "docker run -p 3000:3000 -p 3001:3001 zhd-onboarding",
+    "deploy": "npm run build && npm run docker:build"
+  },
+  "dependencies": {
+    "@mapbox/node-pre-gyp": "^2.0.0",
+    "concurrently": "^8.2.2",
+    "google-protobuf": "^3.21.4",
+    "progress": "^2.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.0"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
