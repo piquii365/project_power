@@ -13,150 +13,124 @@ import {
   ChevronRight,
   Star
 } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import { useNotification } from '../../contexts/NotificationContext'
+import { useAuth } from '../contexts/AuthContext'
+import { useNotification } from '../contexts/NotificationContext'
+import { getTasks, updateTask } from '../api'
 
 const Onboarding = () => {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { addNotification } = useNotification()
   const [tasks, setTasks] = useState([])
   const [selectedTask, setSelectedTask] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate loading onboarding tasks
-    const loadTasks = async () => {
-      const mockTasks = [
-        {
-          id: 1,
-          title: 'Welcome & Company Overview',
-          description: 'Learn about ZHD Consulting history, mission, and values',
-          type: 'video',
-          duration: '15 min',
-          completed: true,
-          category: 'company',
-          priority: 'high',
-          icon: Users,
-          progress: 100
-        },
-        {
-          id: 2,
-          title: 'IT Security Training',
-          description: 'Essential cybersecurity practices and company policies',
-          type: 'interactive',
-          duration: '45 min',
-          completed: false,
-          category: 'security',
-          priority: 'high',
-          icon: Shield,
-          progress: 0,
-          dueDate: '2024-01-20'
-        },
-        {
-          id: 3,
-          title: 'HR Policies & Benefits',
-          description: 'Understanding your benefits package and HR policies',
-          type: 'document',
-          duration: '30 min',
-          completed: true,
-          category: 'hr',
-          priority: 'medium',
-          icon: FileText,
-          progress: 100
-        },
-        {
-          id: 4,
-          title: 'Team Introduction & Roles',
-          description: 'Meet your team members and understand reporting structure',
-          type: 'meeting',
-          duration: '60 min',
-          completed: false,
-          category: 'team',
-          priority: 'medium',
-          icon: Users,
-          progress: 25,
-          dueDate: '2024-01-22'
-        },
-        {
-          id: 5,
-          title: 'Technical Setup & Tools',
-          description: 'Configure your development environment and access tools',
-          type: 'hands-on',
-          duration: '90 min',
-          completed: false,
-          category: 'technical',
-          priority: 'high',
-          icon: Book,
-          progress: 0,
-          dueDate: '2024-01-21'
-        },
-        {
-          id: 6,
-          title: 'First Project Assignment',
-          description: 'Review and start your first project with guidance',
-          type: 'project',
-          duration: '2-3 hours',
-          completed: false,
-          category: 'project',
-          priority: 'low',
-          icon: Award,
-          progress: 0,
-          dueDate: '2024-01-25'
-        }
-      ]
-      setTasks(mockTasks)
-    }
-
     loadTasks()
   }, [])
 
-  const handleTaskStart = (task) => {
-    setTasks(prevTasks =>
-      prevTasks.map(t =>
-        t.id === task.id
-          ? { ...t, progress: Math.min(t.progress + 10, 100) }
-          : t
-      )
-    )
-    
-    addNotification({
-      type: 'info',
-      title: 'Task Started',
-      message: `You've started "${task.title}"`
-    })
+  const loadTasks = async () => {
+    try {
+      const tasksData = await getTasks()
+      setTasks(tasksData)
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
+      addNotification({
+        type: 'error',
+        title: 'Loading Error',
+        message: 'Failed to load onboarding tasks'
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleTaskComplete = (task) => {
-    setTasks(prevTasks =>
-      prevTasks.map(t =>
-        t.id === task.id
-          ? { ...t, completed: true, progress: 100 }
-          : t
+  const handleTaskStart = async (task) => {
+    try {
+      await updateTask(task.id, { status: 'in_progress' })
+      
+      setTasks(prevTasks =>
+        prevTasks.map(t =>
+          t.id === task.id
+            ? { ...t, status: 'in_progress', startedAt: new Date().toISOString() }
+            : t
+        )
       )
-    )
-    
-    addNotification({
-      type: 'success',
-      title: 'Task Completed!',
-      message: `Great job completing "${task.title}"`
-    })
+      
+      addNotification({
+        type: 'info',
+        title: 'Task Started',
+        message: `You've started "${task.title}"`
+      })
+    } catch (error) {
+      console.error('Failed to start task:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to start task'
+      })
+    }
+  }
+
+  const handleTaskComplete = async (task) => {
+    try {
+      await updateTask(task.id, { status: 'completed', progress: 100 })
+      
+      setTasks(prevTasks =>
+        prevTasks.map(t =>
+          t.id === task.id
+            ? { ...t, status: 'completed', progress: 100, completedAt: new Date().toISOString() }
+            : t
+        )
+      )
+
+      // Update user progress
+      const completedTasks = tasks.filter(t => t.status === 'completed' || t.id === task.id).length
+      const newProgress = Math.round((completedTasks / tasks.length) * 100)
+      updateUser({ onboardingProgress: newProgress })
+      
+      addNotification({
+        type: 'success',
+        title: 'Task Completed!',
+        message: `Great job completing "${task.title}"`
+      })
+    } catch (error) {
+      console.error('Failed to complete task:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to complete task'
+      })
+    }
   }
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true
-    if (filter === 'completed') return task.completed
-    if (filter === 'pending') return !task.completed
+    if (filter === 'completed') return task.status === 'completed'
+    if (filter === 'pending') return task.status !== 'completed'
     if (filter === 'high') return task.priority === 'high'
     return true
   })
 
-  const completedCount = tasks.filter(t => t.completed).length
+  const completedCount = tasks.filter(t => t.status === 'completed').length
   const totalCount = tasks.length
-  const overallProgress = Math.round((completedCount / totalCount) * 100)
+  const overallProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+  const getTaskIcon = (task) => {
+    const iconMap = {
+      video: Users,
+      interactive: Shield,
+      document: FileText,
+      meeting: Users,
+      'hands-on': Book,
+      project: Award
+    }
+    return iconMap[task.type] || Book
+  }
 
   const TaskCard = ({ task }) => {
-    const Icon = task.icon
-    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed
+    const Icon = getTaskIcon(task)
+    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed'
 
     return (
       <motion.div
@@ -165,7 +139,7 @@ const Onboarding = () => {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         className={`bg-white rounded-xl shadow-soft border-l-4 p-6 hover:shadow-hover transition-all cursor-pointer ${
-          task.completed 
+          task.status === 'completed' 
             ? 'border-l-success-500' 
             : isOverdue 
             ? 'border-l-error-500' 
@@ -178,9 +152,9 @@ const Onboarding = () => {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start space-x-3">
             <div className={`p-2 rounded-lg ${
-              task.completed ? 'bg-success-100' : 'bg-gray-100'
+              task.status === 'completed' ? 'bg-success-100' : 'bg-gray-100'
             }`}>
-              {task.completed ? (
+              {task.status === 'completed' ? (
                 <CheckCircle className="w-5 h-5 text-success-600" />
               ) : (
                 <Icon className="w-5 h-5 text-gray-600" />
@@ -192,7 +166,7 @@ const Onboarding = () => {
               <div className="flex items-center space-x-4 text-xs text-gray-500">
                 <span className="flex items-center">
                   <Clock className="w-3 h-3 mr-1" />
-                  {task.duration}
+                  {task.estimatedDuration} min
                 </span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   task.priority === 'high' ? 'bg-error-100 text-error-700' :
@@ -212,7 +186,7 @@ const Onboarding = () => {
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </div>
 
-        {!task.completed && task.progress > 0 && (
+        {task.status !== 'completed' && task.progress > 0 && (
           <div className="mb-3">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-gray-600">Progress</span>
@@ -231,14 +205,17 @@ const Onboarding = () => {
 
         <div className="flex items-center justify-between">
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            task.completed ? 'bg-success-100 text-success-800' : 'bg-primary-100 text-primary-800'
+            task.status === 'completed' ? 'bg-success-100 text-success-800' : 
+            task.status === 'in_progress' ? 'bg-primary-100 text-primary-800' :
+            'bg-gray-100 text-gray-800'
           }`}>
-            {task.completed ? 'Completed' : 'In Progress'}
+            {task.status === 'completed' ? 'Completed' : 
+             task.status === 'in_progress' ? 'In Progress' : 'Not Started'}
           </span>
           
-          {!task.completed && (
+          {task.status !== 'completed' && (
             <div className="flex space-x-2">
-              {task.progress === 0 && (
+              {task.status === 'not_started' && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -250,7 +227,7 @@ const Onboarding = () => {
                   Start
                 </button>
               )}
-              {task.progress > 0 && task.progress < 100 && (
+              {task.status === 'in_progress' && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -266,6 +243,14 @@ const Onboarding = () => {
           )}
         </div>
       </motion.div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
     )
   }
 
@@ -383,7 +368,7 @@ const Onboarding = () => {
               <div className="flex items-center space-x-4 mb-6 text-sm text-gray-600">
                 <span className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
-                  {selectedTask.duration}
+                  {selectedTask.estimatedDuration} min
                 </span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   selectedTask.priority === 'high' ? 'bg-error-100 text-error-700' :
@@ -392,13 +377,55 @@ const Onboarding = () => {
                 }`}>
                   {selectedTask.priority} priority
                 </span>
+                <span className="capitalize">{selectedTask.category}</span>
               </div>
 
-              {!selectedTask.completed && (
+              {selectedTask.content && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Task Content</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    {selectedTask.content.modules && (
+                      <div>
+                        <h4 className="font-medium mb-2">Modules:</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedTask.content.modules.map((module, index) => (
+                            <li key={index} className="text-sm text-gray-600">{module}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedTask.resources && selectedTask.resources.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Resources</h3>
+                  <div className="space-y-2">
+                    {selectedTask.resources.map((resource, index) => (
+                      <a
+                        key={index}
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <FileText className="w-4 h-4 mr-3 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-900">{resource.title}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTask.status !== 'completed' && (
                 <div className="flex space-x-3">
-                  {selectedTask.progress === 0 ? (
+                  {selectedTask.status === 'not_started' ? (
                     <button
-                      onClick={() => handleTaskStart(selectedTask)}
+                      onClick={() => {
+                        handleTaskStart(selectedTask)
+                        setSelectedTask(null)
+                      }}
                       className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
                     >
                       <Play className="w-4 h-4 mr-2" />
@@ -406,7 +433,10 @@ const Onboarding = () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleTaskComplete(selectedTask)}
+                      onClick={() => {
+                        handleTaskComplete(selectedTask)
+                        setSelectedTask(null)
+                      }}
                       className="flex items-center px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />

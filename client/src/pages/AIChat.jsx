@@ -1,13 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Bot, User, Lightbulb, Clock, BookOpen } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext'
+import { useNotification } from '../contexts/NotificationContext'
+import { sendMessage, getChatHistory } from '../api'
 
 const AIChat = () => {
   const { user } = useAuth()
+  const { addNotification } = useNotification()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [loading, setLoading] = useState(true)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -20,22 +24,66 @@ const AIChat = () => {
   }, [messages])
 
   useEffect(() => {
-    // Initial welcome message
-    setMessages([
-      {
-        id: 1,
-        type: 'bot',
-        content: `Hi ${user?.name.split(' ')[0]}! I'm your AI onboarding assistant. I'm here to help you with any questions about ZHD Consulting, your role, benefits, or anything else you need to know. What would you like to learn about?`,
-        timestamp: new Date(),
-        suggestions: [
-          'Tell me about company benefits',
-          'What are my upcoming tasks?',
-          'Who is on my team?',
-          'How do I access company resources?'
-        ]
+    loadChatHistory()
+  }, [])
+
+  const loadChatHistory = async () => {
+    try {
+      const response = await getChatHistory(1, 50)
+      if (response.messages && response.messages.length > 0) {
+        const formattedMessages = response.messages.map(msg => ({
+          id: msg.id,
+          type: 'user',
+          content: msg.message,
+          timestamp: new Date(msg.createdAt)
+        })).concat(response.messages.map(msg => ({
+          id: `${msg.id}-response`,
+          type: 'bot',
+          content: msg.response,
+          timestamp: new Date(msg.createdAt),
+          intent: msg.intent,
+          confidence: msg.confidence
+        }))).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        
+        setMessages(formattedMessages)
+      } else {
+        // Add welcome message if no history
+        setMessages([
+          {
+            id: 1,
+            type: 'bot',
+            content: `Hi ${user?.firstName || 'there'}! I'm your AI onboarding assistant. I'm here to help you with any questions about ZHD Consulting, your role, benefits, or anything else you need to know. What would you like to learn about?`,
+            timestamp: new Date(),
+            suggestions: [
+              'Tell me about company benefits',
+              'What are my upcoming tasks?',
+              'Who is on my team?',
+              'How do I access company resources?'
+            ]
+          }
+        ])
       }
-    ])
-  }, [user])
+    } catch (error) {
+      console.error('Failed to load chat history:', error)
+      // Add welcome message on error
+      setMessages([
+        {
+          id: 1,
+          type: 'bot',
+          content: `Hi ${user?.firstName || 'there'}! I'm your AI onboarding assistant. How can I help you today?`,
+          timestamp: new Date(),
+          suggestions: [
+            'Tell me about company benefits',
+            'What are my upcoming tasks?',
+            'Who is on my team?',
+            'How do I access company resources?'
+          ]
+        }
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSend = async (message = input) => {
     if (!message.trim()) return
@@ -51,108 +99,44 @@ const AIChat = () => {
     setInput('')
     setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const botResponse = generateResponse(message)
-      setMessages(prev => [...prev, botResponse])
-      setIsTyping(false)
-    }, 1000 + Math.random() * 1000)
-  }
+    try {
+      const response = await sendMessage({ 
+        message, 
+        context: { 
+          userId: user?.id,
+          currentPage: 'chat'
+        } 
+      })
 
-  const generateResponse = (userMessage) => {
-    const responses = {
-      benefits: {
-        content: `Great question! ZHD Consulting offers comprehensive benefits including:
-
-• **Health Insurance**: Full coverage with dental and vision
-• **401(k)**: 4% company match, immediate vesting
-• **PTO**: 15 days vacation + 10 sick days + holidays
-• **Professional Development**: $2,000 annual learning budget
-• **Remote Work**: Flexible hybrid schedule
-• **Wellness**: Gym membership reimbursement
-
-Would you like more details about any specific benefit?`,
-        suggestions: ['Health insurance details', 'How to enroll in 401(k)', 'Remote work policy']
-      },
-      team: {
-        content: `You'll be working with an amazing team! Here's who you'll be collaborating with closely:
-
-• **Sarah Chen** - Team Lead (sarah.chen@zhd.com)
-• **Mike Rodriguez** - Senior Developer (mike.r@zhd.com)
-• **Emily Watson** - UX Designer (emily.w@zhd.com)
-• **James Liu** - Product Manager (james.liu@zhd.com)
-
-Your direct manager is Sarah Chen. I'd recommend scheduling 1-on-1 meetings with each team member during your first week!`,
-        suggestions: ['Schedule team meetings', 'Learn about current projects', 'Team communication tools']
-      },
-      tasks: {
-        content: `Based on your progress, here are your upcoming priority tasks:
-
-🔴 **High Priority**:
-• Complete IT Security Training (Due: Jan 20)
-• Technical Setup & Tools (Due: Jan 21)
-
-🟡 **Medium Priority**:
-• Team Introduction Meeting (Due: Jan 22)
-• Review Project Documentation
-
-🟢 **Low Priority**:
-• First Project Assignment (Due: Jan 25)
-
-Would you like help with any of these tasks?`,
-        suggestions: ['Help with security training', 'Technical setup guide', 'Project details']
-      },
-      resources: {
-        content: `Here are the key resources you'll need:
-
-**Essential Tools**:
-• **Slack**: Team communication (invite sent to your email)
-• **Jira**: Project management (access being provisioned)
-• **GitHub**: Code repository (pending approval)
-• **Figma**: Design collaboration
-
-**Company Resources**:
-• **Employee Handbook**: Available on the intranet
-• **IT Support**: ext. 4400 or it-help@zhd.com
-• **HR Portal**: benefits.zhd.com
-
-Need help accessing any of these?`,
-        suggestions: ['Slack setup help', 'Password reset', 'IT support contact']
-      },
-      default: {
-        content: `I understand you're asking about that. While I'm continuously learning, I might not have all the specific details you need right now. 
-
-Here are some things I can definitely help you with:
-• Company policies and benefits
-• Onboarding tasks and deadlines  
-• Team introductions and contacts
-• Access to tools and resources
-• General questions about ZHD Consulting
-
-For more specific questions, I'd recommend reaching out to your manager Sarah Chen or HR directly. Is there something else I can help you with?`,
-        suggestions: ['Contact HR', 'Message my manager', 'View company directory']
+      const botMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: response.response,
+        timestamp: new Date(),
+        intent: response.intent,
+        confidence: response.confidence,
+        suggestions: response.suggestions
       }
-    }
 
-    let responseKey = 'default'
-    const lowerMessage = userMessage.toLowerCase()
-
-    if (lowerMessage.includes('benefit') || lowerMessage.includes('insurance') || lowerMessage.includes('401k') || lowerMessage.includes('pto')) {
-      responseKey = 'benefits'
-    } else if (lowerMessage.includes('team') || lowerMessage.includes('colleague') || lowerMessage.includes('manager')) {
-      responseKey = 'team'
-    } else if (lowerMessage.includes('task') || lowerMessage.includes('todo') || lowerMessage.includes('upcoming') || lowerMessage.includes('deadline')) {
-      responseKey = 'tasks'
-    } else if (lowerMessage.includes('access') || lowerMessage.includes('tool') || lowerMessage.includes('login') || lowerMessage.includes('resource')) {
-      responseKey = 'resources'
-    }
-
-    return {
-      id: Date.now(),
-      type: 'bot',
-      content: responses[responseKey].content,
-      timestamp: new Date(),
-      suggestions: responses[responseKey].suggestions
+      setMessages(prev => [...prev, botMessage])
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: "I'm sorry, I'm having trouble processing your request right now. Please try again or contact support.",
+        timestamp: new Date(),
+        suggestions: ['Try again', 'Contact HR', 'View help documentation']
+      }
+      setMessages(prev => [...prev, errorMessage])
+      
+      addNotification({
+        type: 'error',
+        title: 'Message Failed',
+        message: 'Unable to send message. Please try again.'
+      })
+    } finally {
+      setIsTyping(false)
     }
   }
 
@@ -193,6 +177,11 @@ For more specific questions, I'd recommend reaching out to your manager Sarah Ch
             <div className="whitespace-pre-wrap text-sm leading-relaxed">
               {message.content}
             </div>
+            {message.confidence && (
+              <div className="text-xs opacity-70 mt-1">
+                Confidence: {Math.round(message.confidence * 100)}%
+              </div>
+            )}
           </div>
           
           <div className="text-xs text-gray-500 mt-1 px-1">
@@ -217,6 +206,14 @@ For more specific questions, I'd recommend reaching out to your manager Sarah Ch
       </div>
     </motion.div>
   )
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -295,7 +292,7 @@ For more specific questions, I'd recommend reaching out to your manager Sarah Ch
         
         <div className="flex items-center justify-center mt-2 text-xs text-gray-500">
           <Clock className="w-3 h-3 mr-1" />
-          AI responses are generated for demonstration purposes
+          AI responses are powered by advanced machine learning
         </div>
       </div>
     </motion.div>
