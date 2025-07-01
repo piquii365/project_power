@@ -1,9 +1,10 @@
 # Multi-stage build for ZHD AI Onboarding System
 FROM node:18-alpine AS base
 
-# Install system dependencies
+# Install system dependencies including Python for AI training
 RUN apk add --no-cache \
     python3 \
+    py3-pip \
     make \
     g++ \
     cairo-dev \
@@ -42,8 +43,10 @@ RUN npm ci
 # Production stage
 FROM node:18-alpine AS production
 
-# Install runtime dependencies
+# Install runtime dependencies including Python for AI models
 RUN apk add --no-cache \
+    python3 \
+    py3-pip \
     cairo \
     jpeg \
     pango \
@@ -52,7 +55,9 @@ RUN apk add --no-cache \
     pixman \
     pangomm \
     libjpeg-turbo \
-    freetype
+    freetype \
+    curl \
+    bash
 
 WORKDIR /app
 
@@ -62,8 +67,16 @@ COPY --from=server-build /app/server ./server
 COPY --from=base /app/node_modules ./node_modules
 COPY package*.json ./
 
-# Create models directory
-RUN mkdir -p ./models
+# Copy scripts and models directories
+COPY scripts/ ./scripts/
+COPY server/scripts/ ./server/scripts/
+
+# Create necessary directories
+RUN mkdir -p ./models ./logs
+
+# Copy the initialization script
+COPY docker-init.sh ./docker-init.sh
+RUN chmod +x ./docker-init.sh
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -77,8 +90,8 @@ USER nodejs
 EXPOSE 3000 3001
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node server/scripts/health-check.js
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3001/api/health || exit 1
 
-# Start application
-CMD ["npm", "start"]
+# Use initialization script as entrypoint
+ENTRYPOINT ["./docker-init.sh"]

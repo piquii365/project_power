@@ -23,7 +23,7 @@ A comprehensive AI-powered onboarding platform designed specifically for SMEs, f
 - **Frontend**: React 18 + TypeScript + Tailwind CSS
 - **Backend**: Node.js + Express + MySQL + Redis
 - **AI/ML**: TensorFlow.js + Brain.js + Natural + ML5.js
-- **DevOps**: Docker + GitHub Actions + AWS Lambda
+- **DevOps**: Docker + GitHub Actions + Automated Training Pipeline
 
 ### Project Structure
 ```
@@ -45,64 +45,159 @@ zhd-ai-onboarding/
 └── docs/                 # Documentation
 ```
 
-## 🚀 Quick Start
+## 🐳 Docker Deployment (Automated Training & Setup)
+
+The system includes **automatic database migration, seeding, and AI model training** when deployed with Docker.
+
+### Quick Start with Docker
+
+1. **Clone and Build**
+```bash
+git clone https://github.com/piquii365/project_power.git
+cd zhd-ai-onboarding
+
+# Build and start all services
+docker-compose up -d
+```
+
+2. **Monitor the Setup Process**
+```bash
+# Watch the initialization logs
+docker-compose logs -f app
+
+# Check health status
+docker-compose ps
+```
+
+3. **Access the Application**
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:3001
+- **Health Check**: http://localhost:3001/api/health
+
+### What Happens Automatically
+
+When you run `docker-compose up`, the system automatically:
+
+1. **🗄️ Database Setup**
+   - Waits for MySQL to be ready
+   - Runs database migrations
+   - Seeds with demo data (if database is empty)
+
+2. **🤖 AI Model Training**
+   - Trains FAQ classifier (TensorFlow.js)
+   - Trains recommendation engine (Brain.js)
+   - Trains progress predictor
+   - Validates model performance
+   - Creates fallback models if training fails
+
+3. **🚀 Application Startup**
+   - Starts the Express server
+   - Serves the React frontend
+   - Enables health monitoring
+
+### Configuration Options
+
+Control the automated setup with environment variables:
+
+```yaml
+# docker-compose.yml
+environment:
+  - SKIP_AI_TRAINING=false      # Set to true to skip AI training
+  - AI_TRAINING_TIMEOUT=600     # Training timeout (seconds)
+  - MODEL_VALIDATION_TIMEOUT=300 # Validation timeout (seconds)
+```
+
+### Development vs Production
+
+**Development Mode:**
+```bash
+# Uses docker-compose.override.yml
+# Skips AI training for faster startup
+# Mounts source code for live reloading
+docker-compose up
+```
+
+**Production Mode:**
+```bash
+# Full AI training and optimization
+# Optimized for performance
+docker-compose -f docker-compose.yml up -d
+```
+
+### Monitoring and Logs
+
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f app
+docker-compose logs -f mysql
+docker-compose logs -f redis
+
+# Check service health
+docker-compose ps
+curl http://localhost:3001/api/health
+```
+
+### Troubleshooting
+
+**If AI training fails:**
+- The system automatically creates fallback models
+- Basic functionality remains available
+- Check logs: `docker-compose logs app | grep "AI"`
+
+**If database connection fails:**
+- Check MySQL health: `docker-compose ps mysql`
+- Restart services: `docker-compose restart`
+
+**Performance optimization:**
+```bash
+# Allocate more memory to containers
+docker-compose up --scale app=1 --memory=2g
+```
+
+## 🔧 Manual Development Setup
+
+If you prefer manual setup without Docker:
 
 ### Prerequisites
 - Node.js 18+ and npm 9+
 - MySQL 8.0+
 - Redis 7+
-- Docker (optional)
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone and Install**
 ```bash
 git clone https://github.com/piquii365/project_power.git
 cd zhd-ai-onboarding
-```
-
-2. **Install dependencies**
-```bash
 npm install
 cd client && npm install
 cd ../server && npm install
 ```
 
-3. **Environment setup**
+2. **Environment Setup**
 ```bash
-# Copy environment template
 cp server/.env.example server/.env
-
-# Configure your database and Redis connections
-# Edit server/.env with your settings
+# Edit server/.env with your database settings
 ```
 
-4. **Database setup**
+3. **Database Setup**
 ```bash
-# Run migrations
 npm run migrate
-
-# Seed with demo data
 npm run seed
 ```
 
-5. **Train AI models**
+4. **Train AI Models**
 ```bash
-# Train all AI models
 npm run train
-
-# Validate model performance
 npm run validate
 ```
 
-6. **Start development servers**
+5. **Start Development**
 ```bash
-# Start both client and server
 npm run dev
-
-# Or start individually
-npm run client:dev  # Frontend on http://localhost:5173
-npm run server:dev  # Backend on http://localhost:3001
 ```
 
 ### Demo Accounts
@@ -111,8 +206,8 @@ npm run server:dev  # Backend on http://localhost:3001
 
 ## 🤖 AI Model Training
 
-### Training Pipeline
-The system includes three main AI models:
+### Automated Training Pipeline
+The Docker setup includes a complete AI training pipeline that:
 
 1. **FAQ Classifier** (TensorFlow.js)
    - Intent recognition for chatbot queries
@@ -131,13 +226,15 @@ The system includes three main AI models:
 
 ### Training Commands
 ```bash
-# Train all models
+# Docker environment (automatic)
+docker-compose up  # Training happens automatically
+
+# Manual training
 npm run train
-
-# Validate model performance
 npm run validate
+npm run docker:train  # Docker-optimized training
 
-# View training metrics
+# View training results
 cat models/training-metrics.json
 ```
 
@@ -148,45 +245,13 @@ cat models/training-metrics.json
 | Recommendation Engine | 81% F1-score | <400ms | 12MB |
 | Progress Predictor | 78% R² | <200ms | 38MB |
 
-## 🔧 Development Methodology
-
-### Scrum Implementation
-The project follows Agile/Scrum methodology adapted for AI development:
-
-#### Sprint Planning
-- **Backlog Grooming**: Features prioritized using effort-impact matrices
-- **AI-Specific Planning**: Model training cycles integrated into sprint planning
-- **Stakeholder Involvement**: Regular demo sessions with HR teams
-
-#### Daily Standups
-- **Integration Focus**: TensorFlow.js and Express API challenges
-- **Model Performance**: Daily accuracy and performance monitoring
-- **Blockers**: AI training bottlenecks and data quality issues
-
-#### Sprint Reviews
-- **Stakeholder Demos**: Role-based dashboard validation
-- **A/B Testing**: Feature flag experiments for AI components
-- **Metrics Review**: User engagement and task completion rates
-
-### Code Quality Standards
-- **Test-Driven Development**: 85% code coverage with Jest
-- **GitFlow Workflow**: Feature branches with AI model versioning
-- **CI/CD Pipeline**: Automated model validation and deployment
-- **Code Reviews**: Mandatory reviews for AI algorithm changes
-
 ## 📊 Performance Metrics
 
 ### System Performance
 - **Response Time**: <2s for all user interactions
 - **Throughput**: 500+ concurrent users supported
 - **Availability**: 99.9% uptime target
-- **Scalability**: Auto-scaling on AWS Lambda
-
-### AI Model Metrics
-- **FAQ Accuracy**: 89% intent recognition
-- **Recommendation Precision**: 83% relevant suggestions
-- **Progress Prediction**: ±9% forecast accuracy
-- **User Satisfaction**: 4.6/5.0 average rating
+- **Scalability**: Auto-scaling with Docker Swarm
 
 ### Business Impact
 - **Onboarding Time**: 31% reduction (6.2 → 4.3 days)
@@ -203,93 +268,76 @@ The project follows Agile/Scrum methodology adapted for AI development:
 - **Audit Logging**: Comprehensive activity tracking
 
 ### AI Ethics
-- **Bias Mitigation**: Regular fairness audits using TensorFlow Fairness Indicators
-- **Explainability**: SHAP.js integration for recommendation transparency
+- **Bias Mitigation**: Regular fairness audits
+- **Explainability**: Transparent recommendation reasoning
 - **Data Governance**: Anonymization pipelines for training data
 - **Monitoring**: Continuous drift detection and model retraining
 
-## 🚀 Deployment
+## 🚀 Production Deployment
 
-### Docker Deployment
+### Docker Swarm (Recommended)
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# Initialize swarm
+docker swarm init
 
-# Or build individual container
-npm run docker:build
-npm run docker:run
+# Deploy stack
+docker stack deploy -c docker-compose.yml zhd-onboarding
+
+# Scale services
+docker service scale zhd-onboarding_app=3
 ```
 
-### Production Deployment
+### Kubernetes
 ```bash
-# Build for production
-npm run build
+# Convert docker-compose to k8s
+kompose convert
 
-# Deploy to AWS (configured in CI/CD)
-npm run deploy
+# Deploy to cluster
+kubectl apply -f .
 ```
 
 ### Environment Variables
-Key environment variables for production:
+Key production environment variables:
 ```env
 NODE_ENV=production
 DB_HOST=your-mysql-host
 DB_NAME=zhd_onboarding
 REDIS_HOST=your-redis-host
 JWT_SECRET=your-secret-key
-AWS_REGION=us-east-1
+SKIP_AI_TRAINING=false
+AI_TRAINING_TIMEOUT=1200
 ```
 
 ## 📈 Monitoring & Analytics
 
 ### Application Monitoring
-- **Performance**: New Relic APM integration
-- **Errors**: Sentry error tracking
-- **Logs**: Winston structured logging
+- **Health Checks**: Built-in health endpoints
 - **Metrics**: Custom Prometheus metrics
+- **Logs**: Structured logging with Winston
+- **Alerts**: Automated alerting for failures
 
 ### AI Model Monitoring
 - **Drift Detection**: Automated data drift alerts
 - **Performance Tracking**: Model accuracy over time
 - **A/B Testing**: Canary deployments for model updates
-- **Feedback Loop**: User feedback integration for continuous improvement
+- **Feedback Loop**: User feedback integration
 
 ## 🤝 Contributing
 
-### Development Setup
+### Development Workflow
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and add tests
-4. Run the test suite: `npm test`
-5. Train and validate models: `npm run train && npm run validate`
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
+3. Make changes and test with Docker: `docker-compose up`
+4. Run tests: `npm test`
+5. Commit changes: `git commit -m 'Add amazing feature'`
+6. Push and create Pull Request
 
 ### Code Standards
-- **ESLint**: Enforced code style and quality
-- **Prettier**: Automated code formatting
-- **TypeScript**: Type safety for frontend components
-- **Jest**: Unit and integration testing
-- **Husky**: Pre-commit hooks for quality gates
-
-### AI Model Contributions
-- **Training Data**: Contributions to training datasets welcome
-- **Model Improvements**: Algorithm enhancements and optimizations
-- **Validation**: Additional test cases and benchmarks
-- **Documentation**: Model architecture and performance documentation
-
-## 📚 Documentation
-
-### API Documentation
-- **OpenAPI Spec**: Available at `/api/docs` when running
-- **Postman Collection**: Import from `docs/api-collection.json`
-- **GraphQL Playground**: Available at `/graphql` (if enabled)
-
-### AI Model Documentation
-- **Architecture Diagrams**: See `docs/ai-architecture.md`
-- **Training Procedures**: Detailed in `docs/model-training.md`
-- **Performance Benchmarks**: Available in `docs/benchmarks.md`
+- **ESLint**: Enforced code style
+- **Prettier**: Automated formatting
+- **TypeScript**: Type safety
+- **Jest**: Testing framework
+- **Docker**: Consistent environments
 
 ## 📄 License
 
@@ -297,27 +345,38 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **ZHD Consulting**: For providing the business requirements and validation
-- **TensorFlow.js Team**: For excellent in-browser ML capabilities
-- **Brain.js Community**: For neural network implementations
-- **Open Source Contributors**: For the amazing ecosystem of tools
+- **ZHD Consulting**: Business requirements and validation
+- **TensorFlow.js Team**: ML capabilities
+- **Docker Community**: Containerization best practices
+- **Open Source Contributors**: Amazing ecosystem
 
 ## 📞 Support
 
 ### Getting Help
 - **Documentation**: Check the `docs/` directory
 - **Issues**: Report bugs via GitHub Issues
-- **Discussions**: Join our GitHub Discussions
-- **Email**: Contact the development team
+- **Docker Issues**: Check logs with `docker-compose logs -f`
 
-### Commercial Support
-For enterprise support and custom implementations:
-- **Email**: enterprise@zhdconsulting.com
-- **Website**: https://zhdconsulting.com
-- **Phone**: +1 (555) 123-4567
+### Quick Commands Reference
+```bash
+# Start everything
+docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Restart services
+docker-compose restart
+
+# Clean up
+docker-compose down -v
+
+# Health check
+curl http://localhost:3001/api/health
+```
 
 ---
 
 **Built with ❤️ by the ZHD Consulting Development Team**
 
-*Transforming onboarding experiences through AI innovation*
+*Transforming onboarding experiences through AI innovation and automated deployment*

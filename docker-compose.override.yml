@@ -1,0 +1,24 @@
+# Override file for development
+version: '3.8'
+
+services:
+  app:
+    environment:
+      - NODE_ENV=development
+      - SKIP_AI_TRAINING=true  # Skip training in development
+    volumes:
+      - .:/app  # Mount source code for development
+      - /app/node_modules  # Exclude node_modules
+      - /app/client/node_modules
+      - /app/server/node_modules
+    command: ["npm", "run", "dev"]  # Use development command
+    
+  mysql:
+    environment:
+      - MYSQL_ROOT_PASSWORD=dev_password
+    ports:
+      - "3306:3306"  # Expose on standard port for development
+      
+  redis:
+    ports:
+      - "6379:6379"  # Expose on standard port for development

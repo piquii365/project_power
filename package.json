@@ -36,10 +36,15 @@
     "seed": "cd server && npm run seed",
     "train": "node scripts/train-models.js",
     "validate": "node scripts/validate-models.js",
+    "docker:train": "node scripts/docker-train.js",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write .",
     "docker:build": "docker build -t zhd-onboarding .",
     "docker:run": "docker run -p 3000:3000 -p 3001:3001 zhd-onboarding",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f app",
+    "docker:clean": "docker-compose down -v && docker system prune -f",
     "deploy": "npm run build && npm run docker:build"
   },
   "dependencies": {
