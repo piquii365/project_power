@@ -8,6 +8,9 @@ import Onboarding from './pages/Onboarding'
 import AIChat from './pages/AIChat'
 import Analytics from './pages/Analytics'
 import Profile from './pages/Profile'
+import TeamView from './pages/TeamView'
+import TaskManagement from './pages/TaskManagement'
+import HireManagement from './pages/HireManagement'
 import Login from './components/auth/Login'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -38,7 +41,10 @@ const AppContent = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/chat" element={<AIChat />} />
+                <Route path="/team" element={<TeamView />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/tasks" element={<TaskManagement />} />
+                <Route path="/hires" element={<HireManagement />} />
                 <Route path="/profile" element={<Profile />} />
               </Routes>
             </AnimatePresence>

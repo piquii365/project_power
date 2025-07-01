@@ -11,23 +11,32 @@ import {
   Book,
   Award,
   ChevronRight,
-  Star
+  Star,
+  Filter,
+  Search
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { getTasks, updateTask } from '../api'
+import TaskDetails from '../components/common/TaskDetails'
 
 const Onboarding = () => {
   const { user, updateUser } = useAuth()
   const { addNotification } = useNotification()
   const [tasks, setTasks] = useState([])
+  const [filteredTasks, setFilteredTasks] = useState([])
   const [selectedTask, setSelectedTask] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadTasks()
   }, [])
+
+  useEffect(() => {
+    filterTasks()
+  }, [tasks, filter, searchTerm])
 
   const loadTasks = async () => {
     try {
@@ -43,6 +52,31 @@ const Onboarding = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const filterTasks = () => {
+    let filtered = tasks
+
+    if (searchTerm) {
+      filtered = filtered.filter(task =>
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (filter !== 'all') {
+      if (filter === 'completed') {
+        filtered = filtered.filter(task => task.status === 'completed')
+      } else if (filter === 'pending') {
+        filtered = filtered.filter(task => task.status !== 'completed')
+      } else if (filter === 'high') {
+        filtered = filtered.filter(task => task.priority === 'high')
+      } else {
+        filtered = filtered.filter(task => task.category === filter)
+      }
+    }
+
+    setFilteredTasks(filtered)
   }
 
   const handleTaskStart = async (task) => {
@@ -72,14 +106,18 @@ const Onboarding = () => {
     }
   }
 
-  const handleTaskComplete = async (task) => {
+  const handleTaskComplete = async (task, updateData = {}) => {
     try {
-      await updateTask(task.id, { status: 'completed', progress: 100 })
+      await updateTask(task.id, { 
+        status: 'completed', 
+        progress: 100,
+        ...updateData
+      })
       
       setTasks(prevTasks =>
         prevTasks.map(t =>
           t.id === task.id
-            ? { ...t, status: 'completed', progress: 100, completedAt: new Date().toISOString() }
+            ? { ...t, status: 'completed', progress: 100, completedAt: new Date().toISOString(), ...updateData }
             : t
         )
       )
@@ -94,6 +132,8 @@ const Onboarding = () => {
         title: 'Task Completed!',
         message: `Great job completing "${task.title}"`
       })
+
+      setSelectedTask(null)
     } catch (error) {
       console.error('Failed to complete task:', error)
       addNotification({
@@ -104,13 +144,30 @@ const Onboarding = () => {
     }
   }
 
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'all') return true
-    if (filter === 'completed') return task.status === 'completed'
-    if (filter === 'pending') return task.status !== 'completed'
-    if (filter === 'high') return task.priority === 'high'
-    return true
-  })
+  const handleTaskUpdate = async (task, updateData) => {
+    try {
+      await updateTask(task.id, updateData)
+      
+      setTasks(prevTasks =>
+        prevTasks.map(t =>
+          t.id === task.id ? { ...t, ...updateData } : t
+        )
+      )
+      
+      addNotification({
+        type: 'success',
+        title: 'Task Updated',
+        message: 'Your progress has been saved'
+      })
+    } catch (error) {
+      console.error('Failed to update task:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update task'
+      })
+    }
+  }
 
   const completedCount = tasks.filter(t => t.status === 'completed').length
   const totalCount = tasks.length
@@ -174,6 +231,16 @@ const Onboarding = () => {
                   'bg-gray-100 text-gray-700'
                 }`}>
                   {task.priority} priority
+                </span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  task.category === 'company' ? 'bg-blue-100 text-blue-700' :
+                  task.category === 'security' ? 'bg-red-100 text-red-700' :
+                  task.category === 'hr' ? 'bg-purple-100 text-purple-700' :
+                  task.category === 'team' ? 'bg-green-100 text-green-700' :
+                  task.category === 'technical' ? 'bg-orange-100 text-orange-700' :
+                  'bg-indigo-100 text-indigo-700'
+                }`}>
+                  {task.category}
                 </span>
                 {task.dueDate && (
                   <span className={isOverdue ? 'text-error-600 font-medium' : ''}>
@@ -304,25 +371,41 @@ const Onboarding = () => {
 
       {/* Filters */}
       <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { key: 'all', label: 'All Tasks' },
-            { key: 'pending', label: 'Pending' },
-            { key: 'completed', label: 'Completed' },
-            { key: 'high', label: 'High Priority' }
-          ].map(filterOption => (
-            <button
-              key={filterOption.key}
-              onClick={() => setFilter(filterOption.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === filterOption.key
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              {filterOption.label}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'all', label: 'All Tasks' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'completed', label: 'Completed' },
+              { key: 'high', label: 'High Priority' },
+              { key: 'company', label: 'Company' },
+              { key: 'security', label: 'Security' },
+              { key: 'technical', label: 'Technical' }
+            ].map(filterOption => (
+              <button
+                key={filterOption.key}
+                onClick={() => setFilter(filterOption.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === filterOption.key
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {filterOption.label}
+              </button>
+            ))}
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
         </div>
       </div>
 
@@ -335,118 +418,26 @@ const Onboarding = () => {
         </AnimatePresence>
       </div>
 
+      {filteredTasks.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Book className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+          <p className="text-gray-600">Try adjusting your filters or search terms.</p>
+        </div>
+      )}
+
       {/* Task Detail Modal */}
       <AnimatePresence>
         {selectedTask && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={() => setSelectedTask(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedTask.title}</h2>
-                  <p className="text-gray-600">{selectedTask.description}</p>
-                </div>
-                <button
-                  onClick={() => setSelectedTask(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="flex items-center space-x-4 mb-6 text-sm text-gray-600">
-                <span className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {selectedTask.estimatedDuration} min
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  selectedTask.priority === 'high' ? 'bg-error-100 text-error-700' :
-                  selectedTask.priority === 'medium' ? 'bg-warning-100 text-warning-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
-                  {selectedTask.priority} priority
-                </span>
-                <span className="capitalize">{selectedTask.category}</span>
-              </div>
-
-              {selectedTask.content && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Task Content</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    {selectedTask.content.modules && (
-                      <div>
-                        <h4 className="font-medium mb-2">Modules:</h4>
-                        <ul className="list-disc list-inside space-y-1">
-                          {selectedTask.content.modules.map((module, index) => (
-                            <li key={index} className="text-sm text-gray-600">{module}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedTask.resources && selectedTask.resources.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Resources</h3>
-                  <div className="space-y-2">
-                    {selectedTask.resources.map((resource, index) => (
-                      <a
-                        key={index}
-                        href={resource.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <FileText className="w-4 h-4 mr-3 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-900">{resource.title}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedTask.status !== 'completed' && (
-                <div className="flex space-x-3">
-                  {selectedTask.status === 'not_started' ? (
-                    <button
-                      onClick={() => {
-                        handleTaskStart(selectedTask)
-                        setSelectedTask(null)
-                      }}
-                      className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Task
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        handleTaskComplete(selectedTask)
-                        setSelectedTask(null)
-                      }}
-                      className="flex items-center px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Mark Complete
-                    </button>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
+          <TaskDetails
+            task={selectedTask}
+            onClose={() => setSelectedTask(null)}
+            onStart={() => handleTaskStart(selectedTask)}
+            onComplete={(updateData) => handleTaskComplete(selectedTask, updateData)}
+            onUpdate={(updateData) => handleTaskUpdate(selectedTask, updateData)}
+          />
         )}
       </AnimatePresence>
     </motion.div>

@@ -10,7 +10,10 @@ import {
   BookOpen,
   Target,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Plus,
+  UserPlus,
+  ClipboardList
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
@@ -18,7 +21,7 @@ import { getOverview, getTasks, getRecommendations } from '../api'
 import StatsCard from '../components/common/StatsCard'
 import ProgressChart from '../components/common/ProgressChart'
 import RecentActivity from '../components/common/RecentActivity'
-import AIRecommendations from '../components/common/AIRecommendations'
+import TaskRecommendations from '../components/common/TaskRecommendations'
 
 const Dashboard = () => {
   const { user } = useAuth()
@@ -200,6 +203,46 @@ const Dashboard = () => {
           />
         </motion.div>
 
+        {/* Quick Actions */}
+        <motion.div variants={itemVariants} className="mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <button className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group">
+                <div className="flex items-center space-x-3">
+                  <UserPlus className="w-5 h-5 text-primary-600" />
+                  <span className="font-medium text-primary-900">Add New Hire</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-primary-600 group-hover:translate-x-1 transition-transform" />
+              </button>
+              
+              <button className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group">
+                <div className="flex items-center space-x-3">
+                  <ClipboardList className="w-5 h-5 text-success-600" />
+                  <span className="font-medium text-success-900">Manage Tasks</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-success-600 group-hover:translate-x-1 transition-transform" />
+              </button>
+              
+              <button className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group">
+                <div className="flex items-center space-x-3">
+                  <Users className="w-5 h-5 text-warning-600" />
+                  <span className="font-medium text-warning-900">View Team</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-warning-600 group-hover:translate-x-1 transition-transform" />
+              </button>
+              
+              <button className="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group">
+                <div className="flex items-center space-x-3">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                  <span className="font-medium text-purple-900">View Analytics</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Progress Chart */}
           <motion.div variants={itemVariants}>
@@ -316,7 +359,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* AI Recommendations */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
-          <AIRecommendations recommendations={recommendations} />
+          <TaskRecommendations recommendations={recommendations} />
         </motion.div>
 
         {/* Recent Activity */}

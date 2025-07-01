@@ -10,7 +10,10 @@ import {
   X,
   BookOpen,
   Target,
-  Calendar
+  Calendar,
+  UserCheck,
+  Settings,
+  ClipboardList
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -21,7 +24,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Onboarding', href: '/onboarding', icon: BookOpen },
     { name: 'AI Assistant', href: '/chat', icon: MessageCircle },
+    { name: 'Team Directory', href: '/team', icon: Users },
     { name: 'Analytics', href: '/analytics', icon: BarChart3, adminOnly: true },
+    { name: 'Task Management', href: '/tasks', icon: ClipboardList, adminOnly: true },
+    { name: 'Hire Management', href: '/hires', icon: UserCheck, adminOnly: true },
     { name: 'Profile', href: '/profile', icon: User },
   ]
 
@@ -107,14 +113,40 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <div className="flex-1 bg-white bg-opacity-20 rounded-full h-2">
                       <div
                         className="bg-white rounded-full h-2 transition-all duration-500"
-                        style={{ width: `${user.progress}%` }}
+                        style={{ width: `${user.progress || user.onboardingProgress || 0}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-bold">{user.progress}%</span>
+                    <span className="text-sm font-bold">{user.progress || user.onboardingProgress || 0}%</span>
                   </div>
                   <p className="text-xs mt-2 opacity-90">
-                    {user.progress < 100 ? 'Keep going! You\'re doing great.' : 'Congratulations! Welcome to the team.'}
+                    {(user.progress || user.onboardingProgress || 0) < 100 ? 'Keep going! You\'re doing great.' : 'Congratulations! Welcome to the team.'}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Admin Quick Stats */}
+            {user?.role === 'hr_admin' && (
+              <div className="p-4 border-t border-gray-200">
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Admin Dashboard</span>
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="opacity-90">Active Hires:</span>
+                      <span className="font-bold">12</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-90">Avg Progress:</span>
+                      <span className="font-bold">73%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-90">Tasks Assigned:</span>
+                      <span className="font-bold">156</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
