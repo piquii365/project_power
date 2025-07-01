@@ -1,32 +1,45 @@
-import { createClient } from 'redis'
-import dotenv from 'dotenv'
+import { createClient } from 'redis';
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
 const redisClient = createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
+  socket: {
+    host: process.env.REDIS_HOST || 'redis', // Default to service name in Docker
+    port: parseInt(process.env.REDIS_PORT || '6379'), // Ensure port is number
+  },
   password: process.env.REDIS_PASSWORD || undefined,
-  retry_strategy: (options) => {
-    if (options.error && options.error.code === 'ECONNREFUSED') {
-      return new Error('Redis server connection refused')
-    }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      return new Error('Redis retry time exhausted')
-    }
-    if (options.attempt > 10) {
-      return undefined
-    }
-    return Math.min(options.attempt * 100, 3000)
-  }
-})
+  pingInterval: 10000, // Send pings every 10 seconds
+});
 
+// Enhanced error handling
 redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err)
-})
+  console.error('Redis Client Error:', err);
+  if (err.code === 'ECONNREFUSED') {
+    console.error('Connection refused - verify Redis is running and host/port are correct');
+  }
+});
 
 redisClient.on('connect', () => {
-  console.log('✅ Redis connected successfully')
-})
+  console.log('🔌 Attempting Redis connection...');
+});
 
-export default redisClient
+redisClient.on('ready', () => {
+  console.log('✅ Redis connected successfully');
+  console.log(`Connected to Redis at ${process.env.REDIS_HOST || 'redis'}:${process.env.REDIS_PORT || 6379}`);
+});
+
+redisClient.on('reconnecting', () => {
+  console.log('🔄 Redis reconnecting...');
+});
+
+// Connect immediately when imported
+(async () => {
+  try {
+    await redisClient.connect();
+  } catch (err) {
+    console.error('Redis initial connection failed:', err);
+  }
+})();
+
+export default redisClient;
