@@ -101,6 +101,11 @@ const AddNewHire = () => {
   }
 
   const generateAIOnboardingPlan = () => {
+    // Return null if no department is selected
+    if (!formData.department) {
+      return null
+    }
+
     const plan = {
       timeline: '14 days',
       totalTasks: 0,
@@ -230,6 +235,32 @@ const AddNewHire = () => {
         { name: 'Digital Marketing Specialist', match: 79 }
       ]
       plan.successPrediction = 85
+    } else {
+      // Default plan for other departments
+      plan.totalTasks = 8
+      plan.recommendedTasks = [
+        {
+          title: 'Department Overview Session',
+          type: 'meeting',
+          priority: 'high',
+          duration: 60,
+          day: 2,
+          category: 'company'
+        },
+        {
+          title: 'Role-Specific Training',
+          type: 'interactive',
+          priority: 'high',
+          duration: 90,
+          day: 4,
+          category: 'technical'
+        }
+      ]
+      plan.mentorSuggestions = [
+        { name: 'Department Manager', match: 88 },
+        { name: 'Senior Team Member', match: 82 }
+      ]
+      plan.successPrediction = 80
     }
 
     // Add universal tasks
@@ -286,6 +317,9 @@ const AddNewHire = () => {
     if (formData.preferences.workSchedule === 'part-time') {
       plan.riskFactors.push('Extended timeline may be needed for part-time schedule')
     }
+    if (formData.department === 'Sales' && formData.preferences.learningStyle === 'reading') {
+      plan.riskFactors.push('Balance reading materials with interactive sales practice')
+    }
 
     return plan
   }
@@ -318,15 +352,17 @@ const AddNewHire = () => {
       addNotification({
         type: 'success',
         title: 'New Hire Added Successfully',
-        message: `${formData.firstName} ${formData.lastName} has been added with a personalized ${aiPlan.timeline} onboarding plan.`
+        message: `${formData.firstName} ${formData.lastName} has been added with a personalized ${aiPlan?.timeline || '14 day'} onboarding plan.`
       })
 
-      // Show AI plan summary
-      addNotification({
-        type: 'info',
-        title: 'AI Onboarding Plan Generated',
-        message: `Created ${aiPlan.totalTasks} personalized tasks with ${aiPlan.successPrediction}% predicted success rate.`
-      })
+      // Show AI plan summary if available
+      if (aiPlan) {
+        addNotification({
+          type: 'info',
+          title: 'AI Onboarding Plan Generated',
+          message: `Created ${aiPlan.totalTasks} personalized tasks with ${aiPlan.successPrediction}% predicted success rate.`
+        })
+      }
 
       // Show default password notification
       if (data.defaultPassword) {
@@ -354,7 +390,7 @@ const AddNewHire = () => {
     navigate('/hires')
   }
 
-  const aiPlan = formData.department ? generateAIOnboardingPlan() : null
+  const aiPlan = generateAIOnboardingPlan()
 
   return (
     <motion.div
@@ -692,7 +728,7 @@ const AddNewHire = () => {
         </div>
 
         {/* AI Onboarding Plan Sidebar */}
-        {showAIRecommendations && aiPlan && (
+        {showAIRecommendations && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -704,128 +740,140 @@ const AddNewHire = () => {
                 <h3 className="text-lg font-semibold text-purple-900">AI Onboarding Plan</h3>
               </div>
 
-              {/* Plan Overview */}
-              <div className="mb-6">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-white rounded-lg p-3 border border-purple-200">
-                    <div className="text-2xl font-bold text-purple-900">{aiPlan.timeline}</div>
-                    <div className="text-xs text-purple-600">Timeline</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 border border-purple-200">
-                    <div className="text-2xl font-bold text-purple-900">{aiPlan.totalTasks}</div>
-                    <div className="text-xs text-purple-600">Tasks</div>
-                  </div>
+              {!formData.department ? (
+                <div className="text-center py-8">
+                  <Building className="w-12 h-12 text-purple-300 mx-auto mb-4" />
+                  <h4 className="font-medium text-purple-800 mb-2">Select Department</h4>
+                  <p className="text-sm text-purple-600">
+                    Choose a department to generate personalized AI recommendations
+                  </p>
                 </div>
-                
-                <div className="bg-white rounded-lg p-3 border border-purple-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-purple-800">Success Prediction</span>
-                    <span className="text-lg font-bold text-purple-900">{aiPlan.successPrediction}%</span>
-                  </div>
-                  <div className="bg-purple-200 rounded-full h-2">
-                    <div 
-                      className="bg-purple-500 rounded-full h-2 transition-all duration-500"
-                      style={{ width: `${aiPlan.successPrediction}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Weekly Breakdown */}
-              <div className="mb-6">
-                <h4 className="font-medium text-purple-800 mb-3">Weekly Breakdown:</h4>
-                <div className="space-y-3">
-                  {aiPlan.weeklyBreakdown.map((week, index) => (
-                    <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-purple-900">Week {week.week}</span>
-                        <span className="text-sm text-purple-600">{week.tasks} tasks</span>
+              ) : aiPlan ? (
+                <>
+                  {/* Plan Overview */}
+                  <div className="mb-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white rounded-lg p-3 border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-900">{aiPlan.timeline}</div>
+                        <div className="text-xs text-purple-600">Timeline</div>
                       </div>
-                      <div className="text-sm text-purple-700 mb-2">{week.focus}</div>
-                      <div className="bg-purple-200 rounded-full h-1.5">
+                      <div className="bg-white rounded-lg p-3 border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-900">{aiPlan.totalTasks}</div>
+                        <div className="text-xs text-purple-600">Tasks</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-lg p-3 border border-purple-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-purple-800">Success Prediction</span>
+                        <span className="text-lg font-bold text-purple-900">{aiPlan.successPrediction}%</span>
+                      </div>
+                      <div className="bg-purple-200 rounded-full h-2">
                         <div 
-                          className="bg-purple-500 rounded-full h-1.5"
-                          style={{ width: `${week.completion}%` }}
+                          className="bg-purple-500 rounded-full h-2 transition-all duration-500"
+                          style={{ width: `${aiPlan.successPrediction}%` }}
                         />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Key Tasks */}
-              <div className="mb-6">
-                <h4 className="font-medium text-purple-800 mb-3">Key Tasks:</h4>
-                <div className="space-y-2">
-                  {aiPlan.recommendedTasks.slice(0, 4).map((task, index) => (
-                    <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-purple-900 text-sm">{task.title}</div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                              task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {task.priority}
-                            </span>
-                            <span className="text-xs text-purple-600">Day {task.day}</span>
+                  {/* Weekly Breakdown */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-purple-800 mb-3">Weekly Breakdown:</h4>
+                    <div className="space-y-3">
+                      {aiPlan.weeklyBreakdown.map((week, index) => (
+                        <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-purple-900">Week {week.week}</span>
+                            <span className="text-sm text-purple-600">{week.tasks} tasks</span>
+                          </div>
+                          <div className="text-sm text-purple-700 mb-2">{week.focus}</div>
+                          <div className="bg-purple-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-purple-500 rounded-full h-1.5"
+                              style={{ width: `${week.completion}%` }}
+                            />
                           </div>
                         </div>
-                        <div className="ml-2">
-                          {task.type === 'video' && <Play className="w-4 h-4 text-purple-500" />}
-                          {task.type === 'document' && <FileText className="w-4 h-4 text-purple-500" />}
-                          {task.type === 'interactive' && <Target className="w-4 h-4 text-purple-500" />}
-                          {task.type === 'meeting' && <Users className="w-4 h-4 text-purple-500" />}
-                          {task.type === 'hands-on' && <Award className="w-4 h-4 text-purple-500" />}
-                          {task.type === 'project' && <BookOpen className="w-4 h-4 text-purple-500" />}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Tasks */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-purple-800 mb-3">Key Tasks:</h4>
+                    <div className="space-y-2">
+                      {aiPlan.recommendedTasks.slice(0, 4).map((task, index) => (
+                        <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-purple-900 text-sm">{task.title}</div>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                  task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-green-100 text-green-700'
+                                }`}>
+                                  {task.priority}
+                                </span>
+                                <span className="text-xs text-purple-600">Day {task.day}</span>
+                              </div>
+                            </div>
+                            <div className="ml-2">
+                              {task.type === 'video' && <Play className="w-4 h-4 text-purple-500" />}
+                              {task.type === 'document' && <FileText className="w-4 h-4 text-purple-500" />}
+                              {task.type === 'interactive' && <Target className="w-4 h-4 text-purple-500" />}
+                              {task.type === 'meeting' && <Users className="w-4 h-4 text-purple-500" />}
+                              {task.type === 'hands-on' && <Award className="w-4 h-4 text-purple-500" />}
+                              {task.type === 'project' && <BookOpen className="w-4 h-4 text-purple-500" />}
+                            </div>
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mentor Suggestions */}
+                  {aiPlan.mentorSuggestions.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="font-medium text-purple-800 mb-3">Recommended Mentors:</h4>
+                      <div className="space-y-2">
+                        {aiPlan.mentorSuggestions.map((mentor, index) => (
+                          <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-purple-900 text-sm">{mentor.name}</span>
+                              <span className="text-xs text-purple-600">{mentor.match}% match</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
 
-              {/* Mentor Suggestions */}
-              {aiPlan.mentorSuggestions.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="font-medium text-purple-800 mb-3">Recommended Mentors:</h4>
-                  <div className="space-y-2">
-                    {aiPlan.mentorSuggestions.map((mentor, index) => (
-                      <div key={index} className="bg-white rounded-lg p-3 border border-purple-200">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-purple-900 text-sm">{mentor.name}</span>
-                          <span className="text-xs text-purple-600">{mentor.match}% match</span>
-                        </div>
+                  {/* Risk Factors */}
+                  {aiPlan.riskFactors.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-purple-800 mb-3">Considerations:</h4>
+                      <div className="space-y-2">
+                        {aiPlan.riskFactors.map((risk, index) => (
+                          <div key={index} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <div className="flex items-start">
+                              <Lightbulb className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-yellow-800">{risk}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {/* Risk Factors */}
-              {aiPlan.riskFactors.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-purple-800 mb-3">Considerations:</h4>
-                  <div className="space-y-2">
-                    {aiPlan.riskFactors.map((risk, index) => (
-                      <div key={index} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <div className="flex items-start">
-                          <Lightbulb className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-yellow-800">{risk}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mt-6 p-3 bg-purple-100 rounded-lg">
+                    <p className="text-xs text-purple-700">
+                      💡 This AI-generated plan is based on role requirements, department best practices, and learning preferences.
+                    </p>
                   </div>
-                </div>
-              )}
-
-              <div className="mt-6 p-3 bg-purple-100 rounded-lg">
-                <p className="text-xs text-purple-700">
-                  💡 This AI-generated plan is based on role requirements, department best practices, and learning preferences.
-                </p>
-              </div>
+                </>
+              ) : null}
             </div>
           </motion.div>
         )}
