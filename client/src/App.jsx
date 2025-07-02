@@ -13,6 +13,7 @@ import TaskManagement from './pages/TaskManagement'
 import HireManagement from './pages/HireManagement'
 import AddTeamMember from './components/team/AddTeamMember'
 import AddTask from './components/tasks/AddTask'
+import AddNewHire from './components/hires/AddNewHire'
 import Login from './components/auth/Login'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -49,6 +50,7 @@ const AppContent = () => {
                 <Route path="/tasks" element={<TaskManagement />} />
                 <Route path="/tasks/add-task" element={<AddTask />} />
                 <Route path="/hires" element={<HireManagement />} />
+                <Route path="/hires/add-hire" element={<AddNewHire />} />
                 <Route path="/profile" element={<Profile />} />
               </Routes>
             </AnimatePresence>
