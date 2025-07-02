@@ -1,6 +1,7 @@
 {
   "name": "zhd-ai-onboarding-system",
   "version": "1.0.0",
+  "private": true,
   "description": "AI-Based Training and Onboarding System for ZHD Consulting - Full Stack Application",
   "keywords": [
     "ai",
