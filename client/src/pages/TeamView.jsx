@@ -16,9 +16,11 @@ import {
   Edit,
   Trash2
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { getUsers, deleteUser, updateUserRole } from '../api'
+import Breadcrumbs from '../components/common/Breadcrumbs'
 
 const TeamView = () => {
   const { user } = useAuth()
@@ -150,6 +152,8 @@ const TeamView = () => {
       animate={{ opacity: 1 }}
       className="p-6 max-w-7xl mx-auto"
     >
+      <Breadcrumbs />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
@@ -158,10 +162,13 @@ const TeamView = () => {
         </div>
         
         {user?.role === 'hr_admin' && (
-          <button className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors mt-4 sm:mt-0">
+          <Link
+            to="/team/add-member"
+            className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors mt-4 sm:mt-0"
+          >
             <UserPlus className="w-4 h-4 mr-2" />
             Add New Member
-          </button>
+          </Link>
         )}
       </div>
 

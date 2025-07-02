@@ -17,9 +17,11 @@ import {
   AlertCircle,
   MoreVertical
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { getTasks, assignTask, getUsers } from '../api'
+import Breadcrumbs from '../components/common/Breadcrumbs'
 
 const TaskManagement = () => {
   const { user } = useAuth()
@@ -160,6 +162,8 @@ const TaskManagement = () => {
       animate={{ opacity: 1 }}
       className="p-6 max-w-7xl mx-auto"
     >
+      <Breadcrumbs />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
@@ -169,13 +173,13 @@ const TaskManagement = () => {
         
         {user?.role === 'hr_admin' && (
           <div className="flex space-x-3 mt-4 sm:mt-0">
-            <button
-              onClick={() => setShowTaskModal(true)}
+            <Link
+              to="/tasks/add-task"
               className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Task
-            </button>
+            </Link>
             <button
               onClick={() => setShowAssignModal(true)}
               className="flex items-center px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors"
