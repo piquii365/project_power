@@ -15,6 +15,7 @@ import {
   UserPlus,
   ClipboardList
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { getOverview, getTasks, getRecommendations } from '../api'
@@ -213,8 +214,8 @@ const Dashboard = () => {
               Quick Actions
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <a
-                href="/hires"
+              <Link
+                to="/hires/add-hire"
                 className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group"
               >
                 <div className="flex items-center space-x-3">
@@ -224,23 +225,23 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-primary-600 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
 
-              <a
-                href="/tasks"
+              <Link
+                to="/tasks/add-task"
                 className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group"
               >
                 <div className="flex items-center space-x-3">
                   <ClipboardList className="w-5 h-5 text-success-600" />
                   <span className="font-medium text-success-900">
-                    Manage Tasks
+                    Create Task
                   </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-success-600 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
 
-              <a
-                href="/team"
+              <Link
+                to="/team"
                 className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group"
               >
                 <div className="flex items-center space-x-3">
@@ -250,10 +251,10 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-warning-600 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
 
-              <a
-                href="/analytics"
+              <Link
+                to="/analytics"
                 className="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group"
               >
                 <div className="flex items-center space-x-3">
@@ -263,7 +264,7 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -420,8 +421,8 @@ const Dashboard = () => {
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a
-              href="/chat"
+            <Link
+              to="/chat"
               className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group"
             >
               <div className="flex items-center space-x-3">
@@ -431,10 +432,10 @@ const Dashboard = () => {
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-primary-600 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
 
-            <a
-              href="/tasks"
+            <Link
+              to="/onboarding?filter=pending"
               className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group"
             >
               <div className="flex items-center space-x-3">
@@ -444,20 +445,20 @@ const Dashboard = () => {
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-success-600 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
 
-            <a
-              href="team"
+            <Link
+              to="/onboarding"
               className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group"
             >
               <div className="flex items-center space-x-3">
                 <Users className="w-5 h-5 text-warning-600" />
                 <span className="font-medium text-warning-900">
-                  Meet Your Team
+                  View All Tasks
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-warning-600 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
           </div>
         </div>
       </motion.div>

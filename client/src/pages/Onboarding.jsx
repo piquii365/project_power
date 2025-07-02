@@ -17,12 +17,14 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
+import { useLocation } from 'react-router-dom'
 import { getTasks, updateTask } from '../api'
 import TaskDetails from '../components/common/TaskDetails'
 
 const Onboarding = () => {
   const { user, updateUser } = useAuth()
   const { addNotification } = useNotification()
+  const location = useLocation()
   const [tasks, setTasks] = useState([])
   const [filteredTasks, setFilteredTasks] = useState([])
   const [selectedTask, setSelectedTask] = useState(null)
@@ -33,6 +35,15 @@ const Onboarding = () => {
   useEffect(() => {
     loadTasks()
   }, [])
+
+  useEffect(() => {
+    // Check for filter parameter in URL
+    const urlParams = new URLSearchParams(location.search)
+    const filterParam = urlParams.get('filter')
+    if (filterParam) {
+      setFilter(filterParam)
+    }
+  }, [location])
 
   useEffect(() => {
     filterTasks()
@@ -68,7 +79,12 @@ const Onboarding = () => {
       if (filter === 'completed') {
         filtered = filtered.filter(task => task.status === 'completed')
       } else if (filter === 'pending') {
-        filtered = filtered.filter(task => task.status !== 'completed')
+        // Show not started and in progress tasks
+        filtered = filtered.filter(task => task.status === 'not_started' || task.status === 'in_progress')
+      } else if (filter === 'in_progress') {
+        filtered = filtered.filter(task => task.status === 'in_progress')
+      } else if (filter === 'not_started') {
+        filtered = filtered.filter(task => task.status === 'not_started')
       } else if (filter === 'high') {
         filtered = filtered.filter(task => task.priority === 'high')
       } else {
@@ -376,6 +392,7 @@ const Onboarding = () => {
             {[
               { key: 'all', label: 'All Tasks' },
               { key: 'pending', label: 'Pending' },
+              { key: 'in_progress', label: 'In Progress' },
               { key: 'completed', label: 'Completed' },
               { key: 'high', label: 'High Priority' },
               { key: 'company', label: 'Company' },
