@@ -31,7 +31,17 @@ const AddTeamMember = () => {
     role: 'new_hire',
     location: '',
     startDate: '',
-    avatar: ''
+    manager: '',
+    emergencyContact: {
+      name: '',
+      phone: '',
+      relationship: ''
+    },
+    preferences: {
+      learningStyle: 'visual',
+      communicationPreference: 'email',
+      workSchedule: 'full-time'
+    }
   })
 
   const departments = [
@@ -52,12 +62,39 @@ const AddTeamMember = () => {
     { value: 'hr_admin', label: 'HR Administrator' }
   ]
 
+  const learningStyles = [
+    { value: 'visual', label: 'Visual Learner' },
+    { value: 'auditory', label: 'Auditory Learner' },
+    { value: 'kinesthetic', label: 'Hands-on Learner' },
+    { value: 'reading', label: 'Reading/Writing Learner' }
+  ]
+
+  const workSchedules = [
+    { value: 'full-time', label: 'Full-time' },
+    { value: 'part-time', label: 'Part-time' },
+    { value: 'contract', label: 'Contract' },
+    { value: 'remote', label: 'Remote' },
+    { value: 'hybrid', label: 'Hybrid' }
+  ]
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.')
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
   }
 
   const generateAIRecommendations = () => {
@@ -92,8 +129,22 @@ const AddTeamMember = () => {
     setLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Make API call to create team member
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create team member')
+      }
+
+      const data = await response.json()
 
       // Generate AI recommendations
       const aiRecommendations = generateAIRecommendations()
@@ -113,12 +164,22 @@ const AddTeamMember = () => {
         })
       }
 
+      // Show default password notification
+      if (data.defaultPassword) {
+        addNotification({
+          type: 'info',
+          title: 'Default Password',
+          message: `Default password: ${data.defaultPassword} (user should change on first login)`
+        })
+      }
+
       navigate('/team')
     } catch (error) {
+      console.error('Error creating team member:', error)
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to add team member. Please try again.'
+        message: error.message || 'Failed to add team member. Please try again.'
       })
     } finally {
       setLoading(false)
@@ -297,7 +358,7 @@ const AddTeamMember = () => {
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role *
               </label>
@@ -312,6 +373,131 @@ const AddTeamMember = () => {
                   <option key={role.value} value={role.value}>{role.label}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Direct Manager
+              </label>
+              <input
+                type="text"
+                name="manager"
+                value={formData.manager}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Enter manager name"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Learning Preferences */}
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <Sparkles className="w-5 h-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Learning Preferences</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Learning Style
+              </label>
+              <select
+                name="preferences.learningStyle"
+                value={formData.preferences.learningStyle}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {learningStyles.map(style => (
+                  <option key={style.value} value={style.value}>{style.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Communication Preference
+              </label>
+              <select
+                name="preferences.communicationPreference"
+                value={formData.preferences.communicationPreference}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="email">Email</option>
+                <option value="slack">Slack</option>
+                <option value="phone">Phone</option>
+                <option value="in-person">In-person</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Work Schedule
+              </label>
+              <select
+                name="preferences.workSchedule"
+                value={formData.preferences.workSchedule}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {workSchedules.map(schedule => (
+                  <option key={schedule.value} value={schedule.value}>{schedule.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact */}
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <Phone className="w-5 h-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Emergency Contact</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                name="emergencyContact.name"
+                value={formData.emergencyContact.name}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Enter contact name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                name="emergencyContact.phone"
+                value={formData.emergencyContact.phone}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Relationship
+              </label>
+              <input
+                type="text"
+                name="emergencyContact.relationship"
+                value={formData.emergencyContact.relationship}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g., Spouse, Parent"
+              />
             </div>
           </div>
         </div>

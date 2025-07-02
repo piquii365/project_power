@@ -196,8 +196,22 @@ const AddTask = () => {
     setLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Make API call to create task
+      const response = await fetch('/api/onboarding/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create task')
+      }
+
+      const data = await response.json()
 
       addNotification({
         type: 'success',
@@ -205,12 +219,20 @@ const AddTask = () => {
         message: `"${formData.title}" has been successfully created and added to the task library.`
       })
 
+      // Show auto-assignment notification
+      addNotification({
+        type: 'info',
+        title: 'Auto-Assignment',
+        message: 'Task has been automatically assigned to eligible users based on role and department requirements.'
+      })
+
       navigate('/tasks')
     } catch (error) {
+      console.error('Error creating task:', error)
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to create task. Please try again.'
+        message: error.message || 'Failed to create task. Please try again.'
       })
     } finally {
       setLoading(false)

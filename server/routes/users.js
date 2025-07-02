@@ -88,6 +88,120 @@ router.put('/profile', authenticate, validateRequest(schemas.updateProfile), asy
   }
 })
 
+// Create new team member (HR Admin only)
+router.post('/', authenticate, authorize('hr_admin'), async (req, res) => {
+  try {
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      phone, 
+      department, 
+      position, 
+      role, 
+      location, 
+      startDate,
+      manager,
+      emergencyContact,
+      preferences 
+    } = req.body
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } })
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists with this email' })
+    }
+
+    // Generate default password (should be changed on first login)
+    const defaultPassword = 'TempPass123!'
+
+    // Create user
+    const user = await User.create({
+      email,
+      password: defaultPassword,
+      firstName,
+      lastName,
+      role: role || 'new_hire',
+      department,
+      position,
+      phone,
+      location,
+      startDate: startDate ? new Date(startDate) : new Date(),
+      avatar: `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1`,
+      preferences: {
+        ...preferences,
+        emergencyContact: emergencyContact || {},
+        manager: manager || null
+      }
+    })
+
+    // Auto-assign default onboarding tasks for new hires
+    if (role === 'new_hire') {
+      await assignDefaultTasks(user.id, department)
+    }
+
+    // Return user data (excluding password)
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.getFullName(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      department: user.department,
+      position: user.position,
+      avatar: user.avatar,
+      startDate: user.startDate,
+      progress: user.onboardingProgress
+    }
+
+    res.status(201).json({
+      message: 'Team member created successfully',
+      user: userData,
+      defaultPassword: defaultPassword // In production, send this via secure email
+    })
+  } catch (error) {
+    console.error('Create team member error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Helper function to assign default tasks
+async function assignDefaultTasks(userId, department) {
+  try {
+    // Get default tasks for all new hires
+    const defaultTasks = await OnboardingTask.findAll({
+      where: {
+        isActive: true,
+        [Op.or]: [
+          { requiredRole: null },
+          { requiredRole: 'new_hire' },
+          { requiredDepartment: null },
+          { requiredDepartment: department }
+        ]
+      },
+      order: [['priority', 'DESC'], ['order', 'ASC']]
+    })
+
+    // Create user task assignments
+    const userTasks = defaultTasks.map(task => {
+      const dueDate = new Date()
+      dueDate.setDate(dueDate.getDate() + (task.order * 2)) // Stagger due dates
+
+      return {
+        userId,
+        taskId: task.id,
+        dueDate
+      }
+    })
+
+    await UserTask.bulkCreate(userTasks)
+    console.log(`Assigned ${userTasks.length} default tasks to user ${userId}`)
+  } catch (error) {
+    console.error('Error assigning default tasks:', error)
+  }
+}
+
 // Get all users (HR Admin only)
 router.get('/', authenticate, authorize('hr_admin'), async (req, res) => {
   try {

@@ -42,7 +42,6 @@ const AddNewHire = () => {
     location: '',
     startDate: '',
     manager: '',
-    avatar: '',
     emergencyContact: {
       name: '',
       phone: '',
@@ -296,8 +295,22 @@ const AddNewHire = () => {
     setLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Make API call to create new hire
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create new hire')
+      }
+
+      const data = await response.json()
 
       // Generate AI onboarding plan
       const aiPlan = generateAIOnboardingPlan()
@@ -315,12 +328,22 @@ const AddNewHire = () => {
         message: `Created ${aiPlan.totalTasks} personalized tasks with ${aiPlan.successPrediction}% predicted success rate.`
       })
 
+      // Show default password notification
+      if (data.defaultPassword) {
+        addNotification({
+          type: 'info',
+          title: 'Default Password',
+          message: `Default password: ${data.defaultPassword} (user should change on first login)`
+        })
+      }
+
       navigate('/hires')
     } catch (error) {
+      console.error('Error creating new hire:', error)
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to add new hire. Please try again.'
+        message: error.message || 'Failed to add new hire. Please try again.'
       })
     } finally {
       setLoading(false)
