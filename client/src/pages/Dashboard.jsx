@@ -154,7 +154,7 @@ const Dashboard = () => {
     )
   }
 
-  if (user?.role === 'hr_admin') {
+  if (user?.role === "hr_admin") {
     return (
       <motion.div
         variants={containerVariants}
@@ -172,7 +172,10 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div
+          variants={itemVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
           <StatsCard
             title="Total New Hires"
             value={stats.totalHires || 0}
@@ -206,39 +209,61 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <motion.div variants={itemVariants} className="mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Quick Actions
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <button className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group">
+              <a
+                href="/hires"
+                className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group"
+              >
                 <div className="flex items-center space-x-3">
                   <UserPlus className="w-5 h-5 text-primary-600" />
-                  <span className="font-medium text-primary-900">Add New Hire</span>
+                  <span className="font-medium text-primary-900">
+                    Add New Hire
+                  </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-primary-600 group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group">
+              </a>
+
+              <a
+                href="/tasks"
+                className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group"
+              >
                 <div className="flex items-center space-x-3">
                   <ClipboardList className="w-5 h-5 text-success-600" />
-                  <span className="font-medium text-success-900">Manage Tasks</span>
+                  <span className="font-medium text-success-900">
+                    Manage Tasks
+                  </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-success-600 group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group">
+              </a>
+
+              <a
+                href="/team"
+                className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group"
+              >
                 <div className="flex items-center space-x-3">
                   <Users className="w-5 h-5 text-warning-600" />
-                  <span className="font-medium text-warning-900">View Team</span>
+                  <span className="font-medium text-warning-900">
+                    View Team
+                  </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-warning-600 group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button className="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group">
+              </a>
+
+              <a
+                href="/analytics"
+                className="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group"
+              >
                 <div className="flex items-center space-x-3">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
-                  <span className="font-medium text-purple-900">View Analytics</span>
+                  <span className="font-medium text-purple-900">
+                    View Analytics
+                  </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </a>
             </div>
           </div>
         </motion.div>
@@ -255,7 +280,7 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </motion.div>
-    )
+    );
   }
 
   // New hire dashboard
@@ -271,12 +296,16 @@ const Dashboard = () => {
           Welcome to ZHD Consulting, {user.firstName}!
         </h1>
         <p className="text-gray-600">
-          Let's get you up to speed. You're {stats.progress}% through your onboarding journey.
+          Let's get you up to speed. You're {stats.progress}% through your
+          onboarding journey.
         </p>
       </motion.div>
 
       {/* Progress Overview */}
-      <motion.div variants={itemVariants} className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-8">
+      <motion.div
+        variants={itemVariants}
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-8"
+      >
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-semibold mb-1">Your Progress</h2>
@@ -289,7 +318,7 @@ const Dashboard = () => {
             <p className="text-primary-100">Keep going!</p>
           </div>
         </div>
-        
+
         <div className="bg-white bg-opacity-20 rounded-full h-3 mb-4">
           <motion.div
             className="bg-white rounded-full h-3"
@@ -298,58 +327,74 @@ const Dashboard = () => {
             transition={{ duration: 1, delay: 0.5 }}
           />
         </div>
-        
+
         <div className="flex items-center justify-between text-sm">
-          <span className="text-primary-100">Started: {user.startDate ? new Date(user.startDate).toLocaleDateString() : 'Today'}</span>
+          <span className="text-primary-100">
+            Started:{" "}
+            {user.startDate
+              ? new Date(user.startDate).toLocaleDateString()
+              : "Today"}
+          </span>
           <span className="text-primary-100">Target: 2 weeks</span>
         </div>
       </motion.div>
 
       {/* Quick Stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+      >
         <div className="bg-white rounded-xl p-4 shadow-soft border border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-success-100 rounded-lg">
               <CheckCircle className="w-5 h-5 text-success-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.completedTasks}
+              </p>
               <p className="text-sm text-gray-600">Completed</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-soft border border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-warning-100 rounded-lg">
               <Clock className="w-5 h-5 text-warning-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.inProgressTasks}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.inProgressTasks}
+              </p>
               <p className="text-sm text-gray-600">In Progress</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-soft border border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-primary-100 rounded-lg">
               <Calendar className="w-5 h-5 text-primary-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalTasks - stats.completedTasks}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.totalTasks - stats.completedTasks}
+              </p>
               <p className="text-sm text-gray-600">Remaining</p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-soft border border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-error-100 rounded-lg">
               <Target className="w-5 h-5 text-error-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.progress}%</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.progress}%
+              </p>
               <p className="text-sm text-gray-600">Complete</p>
             </div>
           </div>
@@ -371,36 +416,53 @@ const Dashboard = () => {
       {/* Quick Actions */}
       <motion.div variants={itemVariants} className="mt-8">
         <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Actions
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group">
+            <a
+              href="/chat"
+              className="flex items-center justify-between p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors group"
+            >
               <div className="flex items-center space-x-3">
                 <MessageSquare className="w-5 h-5 text-primary-600" />
-                <span className="font-medium text-primary-900">Ask AI Assistant</span>
+                <span className="font-medium text-primary-900">
+                  Ask AI Assistant
+                </span>
               </div>
               <ArrowRight className="w-4 h-4 text-primary-600 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <button className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group">
+            </a>
+
+            <a
+              href="/tasks"
+              className="flex items-center justify-between p-4 bg-success-50 rounded-xl hover:bg-success-100 transition-colors group"
+            >
               <div className="flex items-center space-x-3">
                 <BookOpen className="w-5 h-5 text-success-600" />
-                <span className="font-medium text-success-900">Continue Learning</span>
+                <span className="font-medium text-success-900">
+                  Continue Learning
+                </span>
               </div>
               <ArrowRight className="w-4 h-4 text-success-600 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <button className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group">
+            </a>
+
+            <a
+              href="team"
+              className="flex items-center justify-between p-4 bg-warning-50 rounded-xl hover:bg-warning-100 transition-colors group"
+            >
               <div className="flex items-center space-x-3">
                 <Users className="w-5 h-5 text-warning-600" />
-                <span className="font-medium text-warning-900">Meet Your Team</span>
+                <span className="font-medium text-warning-900">
+                  Meet Your Team
+                </span>
               </div>
               <ArrowRight className="w-4 h-4 text-warning-600 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </a>
           </div>
         </div>
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
 export default Dashboard

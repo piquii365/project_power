@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@mapbox/node-pre-gyp": "^2.0.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "concurrently": "^8.2.2",
     "google-protobuf": "^3.21.4",
     "progress": "^2.0.3"

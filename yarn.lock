@@ -1035,7 +1035,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-4.22.0.tgz#a5d727c1d97cf1fafda18b79be278e83b38a1ad3"
   integrity sha512-PT43MGlnzIo+YfbsjM79Lxk9lOq6uUwZuCc8rrp0hfpLjF6Jv8jS84u2jFb+WpUeuF4K33ZDNx8CjiYrGQ2trQ==
 
-"@tensorflow/tfjs-core@4.22.0":
+"@tensorflow/tfjs-core@4.22.0", "@tensorflow/tfjs-core@^4.22.0":
   version "4.22.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-4.22.0.tgz#fc4b45d2377410fa3a42c88ca77d8f23d83cffc3"
   integrity sha512-LEkOyzbknKFoWUwfkr59vSB68DMJ4cjwwHgicXN0DUi3a0Vh1Er3JQqCI1Hl86GGZQvY8ezVrtDIvqR1ZFW55A==
@@ -1659,7 +1659,7 @@ braces@^3.0.3, braces@~3.0.2:
   dependencies:
     fill-range "^7.1.1"
 
-brain.js@^2.0.0-beta.23:
+brain.js@^2.0.0-beta.23, brain.js@^2.0.0-beta.24:
   version "2.0.0-beta.24"
   resolved "https://registry.yarnpkg.com/brain.js/-/brain.js-2.0.0-beta.24.tgz#d282f3de2e343577cb0999900476931b9e429b60"
   integrity sha512-CkAJpmQPrsKnyL0w6RjDXDhESw6/Hdll3D51yM7bJETbe7r9C5g7owB3fEqfoyJc5tsznMwlnEv2xkUN58J8RQ==
